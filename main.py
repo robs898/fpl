@@ -1,61 +1,28 @@
-from __future__ import division
+from team import names
 import requests
-import operator
-import sys
-
-reload(sys)  
-sys.setdefaultencoding('utf8')
+import unicodedata
 
 url = 'https://fantasy.premierleague.com/drf/bootstrap-static'
 
 resp = requests.get(url=url)
 data = resp.json()
 
-gk = {}
-defen = {}
-mid = {}
-fw = {}
-good_players = {}
+team_value_form = {}
+
+def remove_accents(input_str):
+    nfkd_form = unicodedata.normalize('NFKD', input_str)
+    only_ascii = nfkd_form.encode('ASCII', 'ignore')
+    return only_ascii
 
 for player in data['elements']:
-    if player['minutes'] > 350:
-        bpsps = player['bps'] / player['minutes']
-        bpspspm = bpsps / player['now_cost']
-        if bpsps > 0.2:
-            good_players[player['web_name']] = bpsps
-            if player['element_type'] == 1:
-                gk[player['web_name']] = bpsps
-            if player['element_type'] == 2:
-                defen[player['web_name']] = bpsps
-            if player['element_type'] == 3:
-                mid[player['web_name']] = bpsps
-            if player['element_type'] == 4:
-                fw[player['web_name']] = bpsps
-            #print(player['minutes'])
-            #print(player['now_cost'])
+    for first_name, second_name in names.items():
+        if remove_accents(player['first_name']) == first_name and remove_accents(player['second_name']) == second_name:
+            team_value_form[first_name + ' ' + second_name] = player['value_form']
 
-sort_gk = sorted(gk.items(), key=operator.itemgetter(1))
-sort_defen = sorted(defen.items(), key=operator.itemgetter(1))
-sort_mid = sorted(mid.items(), key=operator.itemgetter(1))
-sort_fw = sorted(fw.items(), key=operator.itemgetter(1))
+sorted_team = sorted(team_value_form, key=team_value_form.get, reverse=True)
 
-for k,v in sorted(good_players.items(), key=operator.itemgetter(1)):
-    print k, '-', v
-print('   ')
-print('GOALKEEPERS')
-for k,v in sort_gk:
-    print k, '-', v
-print('   ')
-print('DEFENDERS')
-for k,v in sort_defen:
-    print k, '-', v
-print('   ')
-print('MIDFIELDERS')
-for k,v in sort_mid:
-    print k, '-', v
+print('Team value (most valuable first):')
+print(sorted_team)
 
-print('   ')
-print('FORWARDS')
-for k,v in sort_fw:
-    print k, '-', v
+
 
